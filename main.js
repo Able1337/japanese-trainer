@@ -205,6 +205,12 @@ function minuteReading(m) {
   let kFull='', rFull='', hFull='';
   let ex = false;
 
+  if (m === 3)  return {k:'三分',  r:'sanpun',      h:'さんぷん',     ex:false};
+  if (m === 13) return {k:'十三分', r:'juusanpun',   h:'じゅうさんぷん', ex:false};
+  if (m === 23) return {k:'二十三分',r:'nijuusanpun', h:'にじゅうさんぷん',ex:false};
+  if (m === 33) return {k:'三十三分',r:'sanjuusanpun',h:'さんじゅうさんぷん',ex:false};
+  if (m === 43) return {k:'四十三分',r:'yonjuusanpun',h:'よんじゅうさんぷん',ex:false};
+  if (m === 53) return {k:'五十三分',r:'gojuusanpun', h:'ごじゅうさんぷん', ex:false};
   if (m === 4)  return {k:'四分',  r:'yonpun',     h:'よんぷん',    ex:false};
   if (m === 14) return {k:'十四分',r:'juuyonpun',  h:'じゅうよんぷん',ex:false};
   if (m === 24) return {k:'二十四分',r:'nijuuyonpun',h:'にじゅうよんぷん',ex:false};
@@ -939,7 +945,7 @@ function renderNumberCard(entry) {
   cardAnswer.innerHTML = '';
   // 🥚 Easter egg: 777
   if (entry.n === 777) {
-    const s = document.createElement('span'); s.className='easter-egg jackpot'; s.textContent='🎰 Джекпот! ／ ジャックポット！'; cardAnswer.appendChild(s);
+    const s = document.createElement('span'); s.className='easter-egg jackpot'; s.innerHTML='🎰 Jackpot!<br>ジャックポット！'; cardAnswer.appendChild(s);
     actionsRow.classList.remove('hidden'); return;
   }
   if (state.numShowKanji)    { const s=document.createElement('span'); s.className='ans-kanji';  s.textContent=entry.kanji;    cardAnswer.appendChild(s); }
