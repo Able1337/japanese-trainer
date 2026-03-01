@@ -441,6 +441,38 @@ button.ghost:hover { background:rgba(255,255,255,.12); }
 /* ── Month table ── */
 .cal-mo-tbl { margin-top: 4px; }
 
+
+/* ── Months table: 2 side by side ── */
+.cal-mo-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cal-mo-row .cal-mo-tbl {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ── Combo card front ── */
+.card-face.cal-combo-kanji {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1em;
+  line-height: 1.05;
+}
+.combo-line-1 {
+  font-size: clamp(36px, 5.5vw, 88px);
+  color: #b8d4ff;
+  text-shadow: 0 0 16px rgba(140,180,255,.35);
+}
+.combo-line-2 {
+  font-size: clamp(48px, 7.5vw, 120px);
+  color: #fff;
+  text-shadow: 0 0 20px rgba(255,255,255,.30);
+}
+
 /* ===== Utility ===== */
 .hidden { display:none !important; }
 

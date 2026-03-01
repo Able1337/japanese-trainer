@@ -432,25 +432,74 @@ const MONTH_DAYS = Array.from({length:31}, (_,i) => {
   };
 });
 
-/* ── Calendar easter eggs (day-of-month + real month check) ── */
-const CAL_EASTER_EGGS = (() => {
-  const now = new Date();
-  const m = now.getMonth() + 1; // 1-based
-  const eggs = {};
-  if (m === 4)  eggs[3]  = '🎂 Поздравь с днём рождения @Able_ebg в телеграмме!';
-  if (m === 12) eggs[8]  = '🎂 Поздравь с днём рождения @ISpa_Nec0 в телеграмме!';
-  if (m === 4)  eggs[11] = '🎌 Поздравляю с днём анимешника!~';
-  return eggs;
-})();
+/* ── Calendar easter eggs {month: {day: text}} ── */
+const CAL_EASTER_EGGS = {
+  4:  { 3:  '🎂 Поздравь с днём рождения @Able_ebg в телеграмме!',
+        11: '🎌 Поздравляю с днём анимешника!~' },
+  12: { 8:  '🎂 Поздравь с днём рождения @ISpa_Nec0 в телеграмме!' },
+};
+
+// Helper: get egg for a given month+day (month 1-based). Returns string or null.
+function getCalEgg(monthN, dayN) {
+  return (CAL_EASTER_EGGS[monthN] && CAL_EASTER_EGGS[monthN][dayN]) || null;
+}
+
+// Helper: range of months with wrap-around (e.g. Apr→Jan = Apr,May,...Dec,Jan)
+function getMonthRange(minN, maxN) {
+  if (minN <= maxN) {
+    return MONTHS.filter(m => m.n >= minN && m.n <= maxN);
+  }
+  // wrap: minN..12 + 1..maxN
+  return MONTHS.filter(m => m.n >= minN || m.n <= maxN);
+}
 
 /* ── Calendar deck builder ── */
 function buildCalendarDeck(cfg) {
   const { calScope, calDayMin, calDayMax, calExOnly, calMonthMin, calMonthMax } = cfg;
   let entries = [];
 
-  const useWeekdays = ['weekdays','mixed','wd_days'].includes(calScope);
-  const useDays     = ['days','mixed','wd_days','days_months'].includes(calScope);
-  const useMonths   = ['months','mixed','days_months'].includes(calScope);
+  if (calScope === 'wd_days') {
+    // Combo: weekday + day-of-month pairs (all combinations from filtered sets)
+    const days = calExOnly
+      ? MONTH_DAYS.filter(d => d.n >= calDayMin && d.n <= calDayMax && d.ex)
+      : MONTH_DAYS.filter(d => d.n >= calDayMin && d.n <= calDayMax);
+    WEEKDAYS.forEach(w => {
+      days.forEach(d => {
+        entries.push({ type:'combo_wd_day', weekday:w, day:d,
+          kanji:  `${w.kanji} · ${d.kanji}`,
+          hira:   `${w.hira} · ${d.hira}`,
+          romaji: `${w.romaji} · ${d.romaji}`,
+          en: `${w.en} · ${d.kanji}`,
+          ru: `${w.ru} · ${d.kanji}`,
+        });
+      });
+    });
+    return entries;
+  }
+
+  if (calScope === 'days_months') {
+    // Combo: month + day pairs (= full date like 5 марта = 三月五日)
+    const days = calExOnly
+      ? MONTH_DAYS.filter(d => d.n >= calDayMin && d.n <= calDayMax && d.ex)
+      : MONTH_DAYS.filter(d => d.n >= calDayMin && d.n <= calDayMax);
+    const months = getMonthRange(calMonthMin, calMonthMax);
+    months.forEach(mo => {
+      days.forEach(d => {
+        entries.push({ type:'combo_day_mo', month:mo, day:d,
+          kanji:  mo.kanji + d.kanji,
+          hira:   mo.hira + ' ' + d.hira,
+          romaji: mo.romaji + ' ' + d.romaji,
+          en: `${mo.en} ${d.n}`,
+          ru: `${d.n} ${mo.ru.toLowerCase()}`,
+        });
+      });
+    });
+    return entries;
+  }
+
+  const useWeekdays = ['weekdays','mixed'].includes(calScope);
+  const useDays     = ['days','mixed'].includes(calScope);
+  const useMonths   = ['months','mixed'].includes(calScope);
 
   if (useWeekdays) WEEKDAYS.forEach(w => entries.push({ type:'weekday', ...w }));
   if (useDays) {
@@ -459,8 +508,7 @@ function buildCalendarDeck(cfg) {
     days.forEach(d => entries.push({ type:'day', ...d }));
   }
   if (useMonths) {
-    MONTHS.filter(m => m.n >= calMonthMin && m.n <= calMonthMax)
-          .forEach(m => entries.push({ type:'month', ...m }));
+    getMonthRange(calMonthMin, calMonthMax).forEach(m => entries.push({ type:'month', ...m }));
   }
   return entries;
 }
@@ -888,7 +936,7 @@ function renderNumberCard(entry) {
   cardAnswer.innerHTML = '';
   // 🥚 Easter egg: 777
   if (entry.n === 777) {
-    const s = document.createElement('span'); s.className='easter-egg jackpot'; s.textContent='🎰 Джекпот!'; cardAnswer.appendChild(s);
+    const s = document.createElement('span'); s.className='easter-egg jackpot'; s.textContent='🎰 Джекпот! ／ ジャックポット！'; cardAnswer.appendChild(s);
     actionsRow.classList.remove('hidden'); return;
   }
   if (state.numShowKanji)    { const s=document.createElement('span'); s.className='ans-kanji';  s.textContent=entry.kanji;    cardAnswer.appendChild(s); }
@@ -987,18 +1035,65 @@ function renderTimeCard(entry) {
 function renderCalendarCard(entry) {
   actionsRow.classList.remove('hidden');
 
-  const lang  = state.calMeaningLang;  // 'en'|'ru'|'off'
-  const meaning = lang === 'en'  ? entry.en
-                : lang === 'ru'  ? entry.ru
-                : null;
+  const lang    = state.calMeaningLang;
+  const meaning = lang === 'en' ? entry.en : lang === 'ru' ? entry.ru : null;
 
-  // ── EASTER EGGS ──
-  // Day 3 April
-  if (entry.type === 'day' && entry._monthCtx === 3 && entry.n === 3) {
-    // можно расширить через контекст месяца; пасхалка на 3 апреля через deck entry
+  // ── COMBO types: wd_days и days_months ──
+  if (entry.type === 'combo_wd_day' || entry.type === 'combo_day_mo') {
+    // Front: всегда kanji (или по выбору, но kanji наиболее понятен для связки)
+    let sFront = state.calShowFront;
+    if (sFront === 'mixed') sFront = ['kanji','hira','romaji'][Math.floor(Math.random()*3)];
+    if (sFront === 'meaning') sFront = 'kanji';
+
+    if (sFront === 'kanji') {
+      cardFront.classList.add('cal-combo-kanji');
+      // Красивый двухстрочный фронт
+      const line1 = document.createElement('span');
+      const line2 = document.createElement('span');
+      if (entry.type === 'combo_wd_day') {
+        line1.textContent = entry.weekday.kanji;  // 火曜日
+        line2.textContent = entry.day.kanji;       // 4日
+      } else {
+        line1.textContent = entry.month.kanji;     // 三月
+        line2.textContent = entry.day.kanji;        // 5日
+      }
+      line1.className = 'combo-line-1';
+      line2.className = 'combo-line-2';
+      cardFront.append(line1, line2);
+    } else if (sFront === 'hira') {
+      cardFront.classList.add('cal-hira-prompt');
+      cardFront.textContent = entry.hira;
+    } else {
+      cardFront.classList.add('cal-romaji-prompt');
+      cardFront.textContent = entry.romaji;
+    }
+
+    // Answer
+    cardAnswer.innerHTML = '';
+
+    // 🥚 Easter egg for combo_day_mo (знаем и месяц и день)
+    if (entry.type === 'combo_day_mo') {
+      const egg = getCalEgg(entry.month.n, entry.day.n);
+      if (egg) {
+        const s = document.createElement('span'); s.className='easter-egg'; s.textContent=egg; cardAnswer.appendChild(s);
+        return;
+      }
+    }
+
+    const ansLines = [
+      { cls:'ans-kanji',  text: entry.kanji,  skip: sFront==='kanji' },
+      { cls:'ans-hira',   text: entry.hira,   skip: sFront==='hira' },
+      { cls:'ans-romaji', text: entry.romaji, skip: sFront==='romaji' },
+    ];
+    if (meaning) ansLines.push({ cls:'ans-meaning', text: meaning, skip: sFront==='meaning' });
+    ansLines.forEach(l => {
+      if (l.skip || !l.text) return;
+      const s = document.createElement('span'); s.className=l.cls; s.textContent=l.text; cardAnswer.appendChild(s);
+    });
+    return;
   }
 
-  // Resolve front type
+  // ── Regular single entry ──
   let sFront = state.calShowFront;
   if (sFront === 'mixed') {
     const opts = ['kanji','hira','romaji'];
@@ -1007,7 +1102,6 @@ function renderCalendarCard(entry) {
   }
   if (sFront === 'meaning' && !meaning) sFront = 'kanji';
 
-  // Front content
   if (sFront === 'kanji') {
     cardFront.classList.add('cal-kanji-prompt');
     cardFront.textContent = entry.kanji;
@@ -1017,25 +1111,21 @@ function renderCalendarCard(entry) {
   } else if (sFront === 'romaji') {
     cardFront.classList.add('cal-romaji-prompt');
     cardFront.textContent = entry.romaji;
-  } else { // meaning
+  } else {
     cardFront.classList.add('cal-meaning-prompt');
     cardFront.textContent = meaning;
   }
 
-  // Answer: all representations not shown on front
   cardAnswer.innerHTML = '';
   const lines = [
-    { cls:'ans-kanji',  text: entry.kanji,  skip: sFront==='kanji'   },
-    { cls:'ans-hira',   text: entry.hira,   skip: sFront==='hira'    },
-    { cls:'ans-romaji', text: entry.romaji, skip: sFront==='romaji'  },
+    { cls:'ans-kanji',  text: entry.kanji,  skip: sFront==='kanji'  },
+    { cls:'ans-hira',   text: entry.hira,   skip: sFront==='hira'   },
+    { cls:'ans-romaji', text: entry.romaji, skip: sFront==='romaji' },
     { cls:'ans-meaning',text: meaning,      skip: sFront==='meaning' || !meaning },
   ];
   lines.forEach(l => {
     if (l.skip || !l.text) return;
-    const s = document.createElement('span');
-    s.className = l.cls;
-    s.textContent = l.text;
-    cardAnswer.appendChild(s);
+    const s = document.createElement('span'); s.className=l.cls; s.textContent=l.text; cardAnswer.appendChild(s);
   });
 
   if (entry.ex) {
@@ -1045,9 +1135,10 @@ function renderCalendarCard(entry) {
     cardAnswer.appendChild(badge);
   }
 
-  // 🥚 Calendar easter eggs (month days)
+  // 🥚 Calendar easter eggs (одиночные day — проверяем реальный текущий месяц)
   if (entry.type === 'day') {
-    const egg = CAL_EASTER_EGGS[entry.n];
+    const realMonth = new Date().getMonth() + 1;
+    const egg = getCalEgg(realMonth, entry.n);
     if (egg) {
       cardAnswer.innerHTML = '';
       const s = document.createElement('span'); s.className='easter-egg'; s.textContent = egg; cardAnswer.appendChild(s);
@@ -1525,7 +1616,7 @@ function renderCalendarTable() {
   mdDiv.appendChild(calGrid);
   wrap.appendChild(mdDiv);
 
-  // ── Section 3: Months ──
+  // ── Section 3: Months — 2 tables of 6 side by side ──
   const moDiv = document.createElement('div');
   moDiv.className = 'cal-section';
   const moTitle = document.createElement('div');
@@ -1533,25 +1624,33 @@ function renderCalendarTable() {
   moTitle.textContent = '月 Months';
   moDiv.appendChild(moTitle);
 
-  const moTable = document.createElement('table');
-  moTable.className = 'cal-wd-tbl cal-mo-tbl';
-  const moThead = moTable.createTHead();
-  const moHr = moThead.insertRow();
-  const moCols = ['#','漢字','ひらがな','Romaji'];
-  if (lang !== 'off') moCols.push(lang === 'ru' ? 'Русский' : 'English');
-  moCols.forEach(t => { const th=document.createElement('th'); th.textContent=t; moHr.appendChild(th); });
+  const moRow = document.createElement('div');
+  moRow.className = 'cal-mo-row';
 
-  const moTbody = moTable.createTBody();
-  MONTHS.forEach(mo => {
-    const tr = moTbody.insertRow();
-    const mCells = [`${mo.emoji} ${mo.kanji}（${mo.short}）`, mo.hira, mo.romaji];
-    if (lang !== 'off') mCells.push(lang === 'ru' ? mo.ru : mo.en);
-    mCells.forEach((txt,i) => {
-      const td = tr.insertCell(); td.textContent = txt;
-      if (i===0) td.classList.add('cal-wd-head');
+  function buildMonthTable(moList) {
+    const tbl = document.createElement('table');
+    tbl.className = 'cal-wd-tbl cal-mo-tbl';
+    const thead = tbl.createTHead();
+    const hr = thead.insertRow();
+    const cols = ['漢字','ひらがな','Romaji'];
+    if (lang !== 'off') cols.push(lang === 'ru' ? 'Русский' : 'English');
+    cols.forEach(t => { const th=document.createElement('th'); th.textContent=t; hr.appendChild(th); });
+    const tbody = tbl.createTBody();
+    moList.forEach(mo => {
+      const tr = tbody.insertRow();
+      const mCells = [`${mo.emoji} ${mo.kanji}（${mo.short}）`, mo.hira, mo.romaji];
+      if (lang !== 'off') mCells.push(lang === 'ru' ? mo.ru : mo.en);
+      mCells.forEach((txt,i) => {
+        const td = tr.insertCell(); td.textContent = txt;
+        if (i===0) td.classList.add('cal-wd-head');
+      });
     });
-  });
-  moDiv.appendChild(moTable);
+    return tbl;
+  }
+
+  moRow.appendChild(buildMonthTable(MONTHS.slice(0,6)));
+  moRow.appendChild(buildMonthTable(MONTHS.slice(6,12)));
+  moDiv.appendChild(moRow);
   wrap.appendChild(moDiv);
 
   tableScroller.appendChild(wrap);
