@@ -616,7 +616,6 @@ const selCalFront    = $('selCalFront');
 const selCalOrder    = $('selCalOrder');
 const selCalDayMin   = $('selCalDayMin');
 const selCalDayMax   = $('selCalDayMax');
-const optCalExOnly   = $('optCalExOnly');
 const selCalMeaning  = $('selCalMeaning');
 const selCalMonthMin = $('selCalMonthMin');
 const selCalMonthMax = $('selCalMonthMax');
@@ -712,7 +711,6 @@ function applyWEProperty(name, value) {
     case 'cal_order':        state.calOrder      = value;          selCalOrder.value   = value; break;
     case 'cal_day_min':      state.calDayMin     = parseInt(value,10)||1;  selCalDayMin.value  = state.calDayMin; break;
     case 'cal_day_max':      state.calDayMax     = parseInt(value,10)||31; selCalDayMax.value  = state.calDayMax; break;
-    case 'cal_ex_only':      state.calExOnly     = !!value; optCalExOnly.checked = !!value; break;
     case 'cal_meaning_lang': state.calMeaningLang= value; selCalMeaning.value  = value; break;
     case 'cal_month_min':    state.calMonthMin   = parseInt(value,10)||1;  selCalMonthMin.value= state.calMonthMin; break;
     case 'cal_month_max':    state.calMonthMax   = parseInt(value,10)||12; selCalMonthMax.value= state.calMonthMax; break;
@@ -765,7 +763,6 @@ selCalFront.addEventListener('change',   () => { state.calShowFront  = selCalFro
 selCalOrder.addEventListener('change',   () => { state.calOrder      = selCalOrder.value;    restart(); });
 selCalDayMin.addEventListener('change',  () => { state.calDayMin     = parseInt(selCalDayMin.value,10)||1;  restart(); });
 selCalDayMax.addEventListener('change',  () => { state.calDayMax     = parseInt(selCalDayMax.value,10)||31; restart(); });
-optCalExOnly.addEventListener('change',  () => { state.calExOnly     = optCalExOnly.checked; restart(); });
 selCalMeaning.addEventListener('change', () => { state.calMeaningLang= selCalMeaning.value;  showCard(); });
 selCalMonthMin.addEventListener('change', () => { state.calMonthMin = parseInt(selCalMonthMin.value,10)||1;  restart(); });
 selCalMonthMax.addEventListener('change', () => { state.calMonthMax = parseInt(selCalMonthMax.value,10)||12; restart(); });
@@ -1702,7 +1699,6 @@ function init() {
   selCalOrder.value     = state.calOrder;
   selCalDayMin.value    = state.calDayMin;
   selCalDayMax.value    = state.calDayMax;
-  optCalExOnly.checked  = state.calExOnly;
   selCalMeaning.value   = state.calMeaningLang;
   selCalMonthMin.value  = state.calMonthMin;
   selCalMonthMax.value  = state.calMonthMax;
