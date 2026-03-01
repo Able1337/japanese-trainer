@@ -205,6 +205,12 @@ function minuteReading(m) {
   let kFull='', rFull='', hFull='';
   let ex = false;
 
+  if (m === 4)  return {k:'四分',  r:'yonpun',     h:'よんぷん',    ex:false};
+  if (m === 14) return {k:'十四分',r:'juuyonpun',  h:'じゅうよんぷん',ex:false};
+  if (m === 24) return {k:'二十四分',r:'nijuuyonpun',h:'にじゅうよんぷん',ex:false};
+  if (m === 34) return {k:'三十四分',r:'sanjuuyonpun',h:'さんじゅうよんぷん',ex:false};
+  if (m === 44) return {k:'四十四分',r:'yonjuuyonpun',h:'よんじゅうよんぷん',ex:false};
+  if (m === 54) return {k:'五十四分',r:'gojuuyonpun', h:'ごじゅうよんぷん', ex:false};
   if (m === 1)  return {k:'一分',  r:'ippun',      h:'いっぷん',    ex:true};
   if (m === 6)  return {k:'六分',  r:'roppun',     h:'ろっぷん',    ex:true};
   if (m === 8)  return {k:'八分',  r:'happun',     h:'はっぷん',    ex:true};
