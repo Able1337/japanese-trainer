@@ -9,8 +9,7 @@ Overview
 Kana Night is a study-focused desktop wallpaper built for Wallpaper Engine. It turns your desktop into a passive Japanese learning tool — flashcards and reference tables appear on demand, the rest of the time it's just a clean, beautiful wallpaper.
 No external libraries. Pure HTML / CSS / JavaScript.
 
-Modes
-ModeWhat you learn
+What you learn
 🔤 KanaHiragana, Katakana, Dakuten, Yōon
 🔢 Numbers0 – 999,999 in kanji, hiragana, romaji
 🕐 TimeHours, minutes, 午前/午後, special phrases
